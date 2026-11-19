@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Banco Itaú • Calendário de Rendimentos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 0 0 20px 0;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            background-color: #003366;
+            color: white;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #ec7000;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .menu-icon, .profile-icon {
+            font-size: 1.3rem;
+            cursor: default;
+            color: #ffffff;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-icon {
+            background-color: #ec7000;
+            color: #003366;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* ===== PAINEL DE SALDO ===== */
+        .balance-panel {
+            background: linear-gradient(145deg, #f8f9fc 0%, #eef1f7 100%);
+            margin: 18px 16px 10px 16px;
+            padding: 18px 20px;
+            border-radius: 24px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.03), inset 0 1px 3px rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 51, 102, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .balance-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #5a6c7e;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .balance-label i {
+            color: #003366;
+            font-size: 0.9rem;
+        }
+
+        .balance-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #003366;
+            line-height: 1.2;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            word-break: break-word;
+            flex-wrap: wrap;
+        }
+
+        .balance-currency {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #4a5b6b;
+            margin-right: 4px;
+        }
+
+        .balance-sub {
+            font-size: 0.8rem;
+            color: #73869b;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            border-top: 1px dashed rgba(0, 51, 102, 0.15);
+            padding-top: 10px;
+        }
+
+        .balance-sub span i {
+            margin-right: 6px;
+            color: #ec7000;
+        }
+
+        /* ===== CALENDÁRIO ===== */
+        .calendar-section {
+            margin: 8px 16px 0 16px;
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 18px 14px 20px 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 51, 102, 0.04);
+            border: 1px solid #eaeef4;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 0 6px;
+        }
+
+        .month-year {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #003366;
+            letter-spacing: -0.5px;
+        }
+
+        .month-year small {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #73869b;
+            margin-left: 8px;
+            letter-spacing: 0;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            background: #f1f4fa;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #003366;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #dce2ec;
+        }
+
+        .nav-btn:hover {
+            background: #e4e9f3;
+            transform: scale(0.96);
+        }
+
+        .nav-btn:active {
+            background: #d0d8e6;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #5f7186;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+
+        .weekdays div {
+            padding: 6px 0;
+            background: #f7f9fd;
+            border-radius: 30px;
+            margin: 0 2px;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            padding: 4px 0;
+        }
+
+        .day-cell {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1e2f40;
+            background: #ffffff;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            user-select: none;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .day-cell:hover {
+            background: #eef3fd;
+            border-color: #b6c8e0;
+        }
+
+        .day-cell.selected {
+            background: #003366;
+            color: white;
+            font-weight: 700;
+            border-color: #003366;
+            box-shadow: 0 6px 12px rgba(0, 51, 102, 0.3);
+            transform: scale(1.02);
+        }
+
+        .day-cell.empty {
+            color: #cbd5e1;
+            background: #fafcff;
+            cursor: default;
+            border-color: transparent;
+            box-shadow: none;
+        }
+
+        .day-cell.empty:hover {
+            background: #fafcff;
+            border-color: transparent;
+        }
+
+        .day-cell.selected::after {
+            content: '';
+            position: absolute;
+            bottom: 6px;
+            width: 5px;
+            height: 5px;
+            background: #ec7000;
+            border-radius: 10px;
+        }
+
+        .footer-info {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #8a9bb0;
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            border-top: 1px solid #edf2f9;
+            padding-top: 14px;
+        }
+
+        .footer-info i {
+            color: #ec7000;
+            font-size: 0.7rem;
+        }
+
+        /* ===== BOTÃO DE EXTRATO ===== */
+        .statement-wrapper {
+            margin: 16px 16px 28px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-statement {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #003366 0%, #004b8f 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0, 51, 102, 0.25);
+            transition: all 0.2s;
+            width: 100%;
+            max-width: 320px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-statement:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 51, 102, 0.32);
+        }
+
+        .btn-statement:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 10px rgba(0, 51, 102, 0.2);
+        }
+
+        .btn-statement:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-statement i {
+            font-size: 1.1rem;
+            color: #ec7000;
+        }
+
+        .btn-statement.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .download-hint {
+            font-size: 0.72rem;
+            color: #8a9bb0;
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.4;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #1e2f40;
+            color: white;
+            padding: 12px 22px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            max-width: 90vw;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: #0a5c3a;
+        }
+
+        .toast.warning {
+            background: #b35a00;
+        }
+
+        .toast.error {
+            background: #a02020;
+        }
+
+        .toast i {
+            color: #ec7000;
+            font-size: 1rem;
+        }
+
+        .toast.success i { color: #7bdca0; }
+        .toast.warning i { color: #ffcc80; }
+        .toast.error i { color: #ff9b9b; }
+
+        @media (max-width: 400px) {
+            .navbar { padding: 12px 14px; }
+            .logo-area { font-size: 1rem; }
+            .balance-value { font-size: 2rem; }
+            .month-year { font-size: 1.3rem; }
+            .day-cell { font-size: 0.95rem; border-radius: 12px; }
+            .calendar-section { padding: 14px 8px 16px 8px; }
+            .nav-btn { width: 36px; height: 36px; font-size: 1rem; }
+            .toast { font-size: 0.78rem; padding: 10px 16px; }
+        }
+
+        @media (max-width: 340px) {
+            .day-cell { font-size: 0.85rem; }
+            .weekdays div { font-size: 0.65rem; }
+        }
+
+        button:focus-visible, .day-cell:focus-visible {
+            outline: 2px solid #ec7000;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <i class="fas fa-bars menu-icon"></i>
+                <div class="logo-area">
+                    <span class="logo-icon">itaú</span>
+                    <span style="font-size: 0.75rem; font-weight: 400; opacity: 0.9;">|</span>
+                    <span style="font-size: 0.85rem;">contas</span>
+                </div>
+            </div>
+            <div class="navbar-right">
+                <i class="fas fa-bell profile-icon"></i>
+                <i class="fas fa-user-circle profile-icon"></i>
+            </div>
+        </nav>
+
+        <!-- SALDO -->
+        <div class="balance-panel">
+            <div class="balance-label">
+                <i class="fas fa-wallet"></i> Saldo disponível
+            </div>
+            <div class="balance-value">
+                <span class="balance-currency">R$</span>
+                <span id="saldoDisplay">0,00</span>
+            </div>
+            <div class="balance-sub">
+                <span><i class="fas fa-calendar-check"></i> Rendimento por dia: R$ 50,00</span>
+                <span id="selectedDaysCount">0 dias</span>
+            </div>
+        </div>
+
+        <!-- CALENDÁRIO -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <div class="month-year" id="monthYearDisplay"></div>
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="prevMonthBtn" aria-label="Mês anterior">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="nav-btn" id="nextMonthBtn" aria-label="Próximo mês">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="weekdays">
+                <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div>
+                <div>Qui</div><div>Sex</div><div>Sáb</div>
+            </div>
+
+            <div class="days-grid" id="daysGrid"></div>
+
+            <div class="footer-info">
+                <i class="fas fa-circle"></i> Clique em um dia para adicionar R$ 50,00
+            </div>
+        </div>
+
+        <!-- BOTÃO DE EXTRATO -->
+        <div class="statement-wrapper">
+            <button class="btn-statement" id="btnStatement">
+                <i class="fas fa-file-pdf"></i> Gerar e baixar extrato em PDF
+            </button>
+            <div class="download-hint">
+                O arquivo será baixado automaticamente na pasta de downloads do seu dispositivo.
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <i class="fas fa-info-circle"></i>
+        <span id="toastMessage">Mensagem</span>
+    </div>
+
+    <script>
+        (function() {
+            // ========== ESTADO ==========
+            let currentDate = new Date();
+            let selectedDays = new Set();
+            let saldo = 0.00;
+
+            // ========== DOM ==========
+            const monthYearDisplay = document.getElementById('monthYearDisplay');
+            const daysGrid = document.getElementById('daysGrid');
+            const prevMonthBtn = document.getElementById('prevMonthBtn');
+            const nextMonthBtn = document.getElementById('nextMonthBtn');
+            const saldoDisplay = document.getElementById('saldoDisplay');
+            const selectedDaysCount = document.getElementById('selectedDaysCount');
+            const btnStatement = document.getElementById('btnStatement');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            // ========== UTILITÁRIOS ==========
+            function formatCurrency(value) {
+                return value.toFixed(2).replace('.', ',');
+            }
+
+            function getDayKey(year, month, day) {
+                return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            }
+
+            function formatDateFromKey(key) {
+                const [y, m, d] = key.split('-');
+                return `${d}/${m}/${y}`;
+            }
+
+            function formatBRL(value) {
+                return 'R$ ' + value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            function updateSaldoDisplay() {
+                saldo = selectedDays.size * 50.00;
+                saldoDisplay.textContent = formatCurrency(saldo);
+                selectedDaysCount.textContent = `${selectedDays.size} ${selectedDays.size === 1 ? 'dia' : 'dias'}`;
+            }
+
+            let toastTimeout;
+            function showToast(message, type = 'info') {
+                toastMessage.textContent = message;
+                toast.className = 'toast show ' + type;
+                const icon = toast.querySelector('i');
+                if (type === 'success') icon.className = 'fas fa-check-circle';
+                else if (type === 'warning') icon.className = 'fas fa-exclamation-triangle';
+                else if (type === 'error') icon.className = 'fas fa-times-circle';
+                else icon.className = 'fas fa-info-circle';
+
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+
+            // ========== RENDERIZAÇÃO ==========
+            function renderCalendar() {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+
+                const monthNames = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ];
+                monthYearDisplay.innerHTML = `${monthNames[month]} <small>${year}</small>`;
+
+                const firstDay = new Date(year, month, 1);
+                const startDayOfWeek = firstDay.getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                daysGrid.innerHTML = '';
+
+                for (let i = 0; i < startDayOfWeek; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.classList.add('day-cell', 'empty');
+                    daysGrid.appendChild(emptyCell);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.classList.add('day-cell');
+                    dayCell.textContent = day;
+
+                    const dayKey = getDayKey(year, month, day);
+
+                    if (selectedDays.has(dayKey)) {
+                        dayCell.classList.add('selected');
+                    }
+
+                    dayCell.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const key = getDayKey(year, month, day);
+
+                        if (selectedDays.has(key)) {
+                            selectedDays.delete(key);
+                            dayCell.classList.remove('selected');
+                        } else {
+                            selectedDays.add(key);
+                            dayCell.classList.add('selected');
+                        }
+
+                        updateSaldoDisplay();
+                    });
+
+                    daysGrid.appendChild(dayCell);
+                }
+
+                const totalCells = startDayOfWeek + daysInMonth;
+                const remainder = totalCells % 7;
+                if (remainder !== 0) {
+                    const emptyCellsToAdd = 7 - remainder;
+                    for (let i = 0; i < emptyCellsToAdd; i++) {
+                        const emptyCell = document.createElement('div');
+                        emptyCell.classList.add('day-cell', 'empty');
+                        daysGrid.appendChild(emptyCell);
+                    }
+                }
+            }
+
+            // ========== NAVEGAÇÃO ==========
+            function goToPreviousMonth() {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            }
+
+            function goToNextMonth() {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            }
+
+            // ========== GERAÇÃO E DOWNLOAD DO PDF ==========
+            function generateStatementPDF() {
+                if (selectedDays.size === 0) {
+                    showToast('Marque pelo menos um dia para gerar o extrato.', 'warning');
+                    return;
+                }
+
+                // Efeito de carregamento no botão
+                btnStatement.disabled = true;
+                btnStatement.classList.add('loading');
+                const originalHTML = btnStatement.innerHTML;
+                btnStatement.innerHTML = '<i class="fas fa-spinner"></i> Gerando PDF...';
+
+                // Delay mínimo para o usuário perceber o feedback visual
+                setTimeout(() => {
+                    try {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: 'a4'
+                        });
+
+                        const pageW = doc.internal.pageSize.getWidth();
+                        const pageH = doc.internal.pageSize.getHeight();
+                        const margin = 18;
+                        let cursorY = 20;
+
+                        const sortedKeys = Array.from(selectedDays).sort();
+
+                        // ===== CABEÇALHO =====
+                        doc.setFillColor(0, 51, 102);
+                        doc.rect(0, 0, pageW, 32, 'F');
+
+                        doc.setFillColor(236, 112, 0);
+                        doc.rect(0, 32, pageW, 3, 'F');
+
+                        doc.setFillColor(236, 112, 0);
+                        doc.roundedRect(margin, 9, 20, 10, 2, 2, 'F');
+                        doc.setTextColor(0, 51, 102);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(11);
+                        doc.text('itaú', margin + 4.5, 16);
+
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(16);
+                        doc.text('Extrato de Rendimentos', margin + 26, 15);
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+                        doc.text('Calendário de Rendimentos Diários', margin + 26, 21);
+
+                        const now = new Date();
+                        const emissionDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                        doc.setFontSize(8);
+                        doc.setTextColor(220, 230, 240);
+                        doc.text(`Emitido em: ${emissionDate}`, pageW - margin, 15, { align: 'right' });
+                        doc.text('Banco Itaú S.A. • Agência 0001', pageW - margin, 21, { align: 'right' });
+
+                        cursorY = 45;
+
+                        // ===== RESUMO DO SALDO =====
+                        doc.setFillColor(245, 248, 252);
+                        doc.setDrawColor(0, 51, 102);
+                        doc.setLineWidth(0.4);
+                        doc.roundedRect(margin, cursorY, pageW - margin * 2, 28, 3, 3, 'FD');
+
+                        doc.setTextColor(80, 100, 120);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+                        doc.text('SALDO TOTAL DISPONÍVEL', margin + 8, cursorY + 8);
+
+                        doc.setTextColor(0, 51, 102);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(22);
+                        doc.text(formatBRL(saldo), margin + 8, cursorY + 20);
+
+                        doc.setTextColor(80, 100, 120);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+                        doc.text('DIAS DE RENDIMENTO', pageW - margin - 8, cursorY + 8, { align: 'right' });
+
+                        doc.setTextColor(0, 51, 102);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(18);
+                        doc.text(`${selectedDays.size} ${selectedDays.size === 1 ? 'dia' : 'dias'}`, pageW - margin - 8, cursorY + 20, { align: 'right' });
+
+                        cursorY += 38;
+
+                        // ===== TABELA =====
+                        doc.setTextColor(0, 51, 102);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(11);
+                        doc.text('Detalhamento dos lançamentos', margin, cursorY);
+                        cursorY += 5;
+
+                        doc.setFillColor(0, 51, 102);
+                        doc.rect(margin, cursorY, pageW - margin * 2, 8, 'F');
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(9);
+                        doc.text('Data', margin + 4, cursorY + 5.5);
+                        doc.text('Descrição', margin + 40, cursorY + 5.5);
+                        doc.text('Valor (R$)', pageW - margin - 4, cursorY + 5.5, { align: 'right' });
+
+                        cursorY += 8;
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+
+                        let totalLancamentos = 0;
+
+                        sortedKeys.forEach((key, index) => {
+                            if (cursorY > pageH - 40) {
+                                doc.addPage();
+                                cursorY = 20;
+                            }
+
+                            const rowH = 8;
+                            const isEven = index % 2 === 0;
+
+                            if (isEven) {
+                                doc.setFillColor(247, 250, 253);
+                                doc.rect(margin, cursorY, pageW - margin * 2, rowH, 'F');
+                            }
+
+                            doc.setDrawColor(225, 232, 240);
+                            doc.setLineWidth(0.2);
+                            doc.line(margin, cursorY + rowH, pageW - margin, cursorY + rowH);
+
+                            doc.setTextColor(40, 60, 80);
+                            doc.text(formatDateFromKey(key), margin + 4, cursorY + 5.5);
+
+                            doc.setTextColor(80, 100, 120);
+                            doc.text('Rendimento diário', margin + 40, cursorY + 5.5);
+
+                            doc.setTextColor(0, 102, 60);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('+ ' + formatBRL(50.00), pageW - margin - 4, cursorY + 5.5, { align: 'right' });
+                            doc.setFont('helvetica', 'normal');
+
+                            totalLancamentos += 50;
+                            cursorY += rowH;
+                        });
+
+                        if (cursorY > pageH - 40) {
+                            doc.addPage();
+                            cursorY = 20;
+                        }
+
+                        cursorY += 2;
+                        doc.setDrawColor(0, 51, 102);
+                        doc.setLineWidth(0.5);
+                        doc.line(margin, cursorY, pageW - margin, cursorY);
+                        cursorY += 7;
+
+                        doc.setTextColor(0, 51, 102);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.text('TOTAL', margin + 4, cursorY);
+                        doc.text(formatBRL(totalLancamentos), pageW - margin - 4, cursorY, { align: 'right' });
+
+                        // ===== RODAPÉ =====
+                        const footerY = pageH - 22;
+
+                        doc.setDrawColor(220, 226, 234);
+                        doc.setLineWidth(0.3);
+                        doc.line(margin, footerY - 6, pageW - margin, footerY - 6);
+
+                        doc.setTextColor(140, 155, 170);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7.5);
+                        doc.text('Este extrato é um documento informativo gerado automaticamente pelo aplicativo.', margin, footerY);
+                        doc.text('Banco Itaú S.A. • CNPJ 60.701.190/0001-04 • Ouvidoria 0800 570 0011', margin, footerY + 4);
+                        doc.text(`Documento gerado em ${emissionDate}`, margin, footerY + 8);
+
+                        const pageCount = doc.internal.getNumberOfPages();
+                        for (let i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setTextColor(140, 155, 170);
+                            doc.setFontSize(7);
+                            doc.text(`Página ${i} de ${pageCount}`, pageW - margin, pageH - 10, { align: 'right' });
+                        }
+
+                        // ===== DOWNLOAD DO PDF =====
+                        const fileName = `extrato-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.pdf`;
+
+                        // Método 1: doc.save() — dispara download automaticamente
+                        // Método 2 (fallback): Blob + link — usado em navegadores que bloqueiam save()
+                        try {
+                            doc.save(fileName);
+                            showToast('Extrato PDF baixado com sucesso!', 'success');
+                        } catch (saveErr) {
+                            // Fallback: gera Blob e força download via âncora
+                            const pdfBlob = doc.output('blob');
+                            const blobUrl = URL.createObjectURL(pdfBlob);
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.download = fileName;
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+
+                            // Limpa após breve delay para liberar memória
+                            setTimeout(() => {
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(blobUrl);
+                            }, 1000);
+
+                            showToast('Extrato PDF baixado com sucesso!', 'success');
+                        }
+
+                    } catch (err) {
+                        console.error('Erro ao gerar PDF:', err);
+                        showToast('Erro ao gerar o PDF. Tente novamente.', 'error');
+                    } finally {
+                        // Restaura o botão
+                        btnStatement.disabled = false;
+                        btnStatement.classList.remove('loading');
+                        btnStatement.innerHTML = originalHTML;
+                    }
+                }, 400);
+            }
+
+            // ========== INICIALIZAÇÃO ==========
+            function init() {
+                currentDate = new Date();
+                renderCalendar();
+                updateSaldoDisplay();
+
+                prevMonthBtn.addEventListener('click', goToPreviousMonth);
+                nextMonthBtn.addEventListener('click', goToNextMonth);
+                btnStatement.addEventListener('click', generateStatementPDF);
+            }
+
+            document.addEventListener('DOMContentLoaded', init);
+        })();
+    </script>
+</body>
+</html>
